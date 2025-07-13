@@ -9,11 +9,12 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors({
   origin: function (origin, callback) {
+    console.log('CORS request from:', origin);
     // Allow localhost for dev
     if (!origin || origin.startsWith('http://localhost:')) {
       return callback(null, true);
     }
-    // Allow any Vercel deployment for this project
+    // Allow any Vercel deployment for this project (preview or production)
     if (/^https:\/\/ytdownloder(-[a-z0-9]+)?\.vercel\.app$/.test(origin)) {
       return callback(null, true);
     }
@@ -22,7 +23,7 @@ app.use(cors({
       return callback(null, true);
     }
     // Otherwise, block
-    callback(new Error('Not allowed by CORS'));
+    callback(new Error('Not allowed by CORS: ' + origin));
   },
   credentials: true,
 }));
