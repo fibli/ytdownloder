@@ -8,11 +8,21 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-  origin: [
-    'https://ytdownloder-p6gyqjqan-bimks-orgs-projects.vercel.app',
-    'http://localhost:5173', // for local dev
-  ],
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow localhost, all Vercel preview/production URLs, and Render frontend
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'https://ytdownloder-b4wg.onrender.com',
+    ];
+    // Allow any Vercel deployment (preview/production)
+    const vercelRegex = /^https:\/\/ytdownloder-[a-z0-9-]+-bimks-orgs-projects\.vercel\.app$/;
+    if (!origin || allowedOrigins.includes(origin) || vercelRegex.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 }));
 app.use(express.json());
 
