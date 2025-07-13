@@ -1,3 +1,18 @@
+
+// Minimal SaveFilePickerOptions type for browser compatibility
+type SaveFilePickerOptions = {
+  suggestedName?: string;
+  types?: Array<{
+    description?: string;
+    accept: Record<string, string[]>;
+  }>;
+};
+declare global {
+  interface Window {
+    showSaveFilePicker?: (options?: SaveFilePickerOptions) => Promise<unknown>;
+  }
+}
+
 import { useState } from 'react';
 import { VideoInfo, VideoFormat, AudioFormat, DownloadProgress, DownloadSettings } from '../types';
 import axios, { AxiosError } from 'axios';
@@ -86,14 +101,13 @@ export const useVideoDownloader = () => {
             const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             const downloadedMB = (progressEvent.loaded / (1024 * 1024)).toFixed(2);
             const totalMB = (progressEvent.total / (1024 * 1024)).toFixed(2);
-            const speed = calculateSpeed(progressEvent.loaded, Date.now());
-            const eta = calculateETA(progressEvent.loaded, progressEvent.total, speed);
+            // Speed and ETA calculation can be improved by tracking previous progress, but for now use 0
             setDownloadProgresses(prev => ({
               ...prev,
               [downloadId]: {
                 percentage,
-                speed: `${speed.toFixed(2)} MB/s`,
-                eta: eta,
+                speed: `0 MB/s`,
+                eta: 'Calculating...',
                 downloaded: `${downloadedMB} MB`,
                 total: `${totalMB} MB`
               }
@@ -101,16 +115,47 @@ export const useVideoDownloader = () => {
           }
         }
       });
-      // Create download link
+      // Create download link using the File System Access API if available, otherwise fallback
       const blob = new Blob([response.data]);
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `${safeTitle}.${extension}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
+      if (window.showSaveFilePicker) {
+        try {
+          const fileHandle = await window.showSaveFilePicker({
+            suggestedName: `${safeTitle}.${extension}`,
+            types: [
+              {
+                description: extension === 'mp3' ? 'MP3 Audio' : 'MP4 Video',
+                accept: {
+                  [extension === 'mp3' ? 'audio/mpeg' : 'video/mp4']: [`.${extension}`]
+                }
+              }
+            ]
+          });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const typedFileHandle = fileHandle as any; // FileSystemFileHandle
+          const writable = await typedFileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        } catch {
+          // If user cancels or error, fallback to download link
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = `${safeTitle}.${extension}`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(downloadUrl);
+        }
+      } else {
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${safeTitle}.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      }
       setDownloadProgresses(prev => ({
         ...prev,
         [downloadId]: {
@@ -135,20 +180,6 @@ export const useVideoDownloader = () => {
     }
   };
 
-  const calculateSpeed = (loaded: number, startTime: number): number => {
-    const elapsed = (Date.now() - startTime) / 1000;
-    return elapsed > 0 ? (loaded / (1024 * 1024)) / elapsed : 0;
-  };
-
-  const calculateETA = (loaded: number, total: number, speedMBps: number): string => {
-    if (speedMBps === 0) return 'Calculating...';
-    const remaining = (total - loaded) / (1024 * 1024);
-    const eta = remaining / speedMBps;
-    
-    if (eta < 60) return `${Math.ceil(eta)}s`;
-    if (eta < 3600) return `${Math.ceil(eta / 60)}m`;
-    return `${Math.ceil(eta / 3600)}h`;
-  };
 
   // Cancel a specific download by ID
   const cancelDownload = (downloadId: string) => {
