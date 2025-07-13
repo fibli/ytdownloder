@@ -65,8 +65,8 @@ app.post('/api/video-info', async (req, res) => {
     if (!/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//.test(url)) {
       return res.status(400).json({ success: false, message: 'Invalid YouTube URL' });
     }
-    // Call yt-dlp to get info in JSON
-    const ytDlpPath = path.join(__dirname, 'yt-dlp.exe');
+    // Call yt-dlp to get info in JSON (use system binary for Linux)
+    const ytDlpPath = 'yt-dlp';
     const ytDlp = spawn(ytDlpPath, ['-j', url]);
     let data = '';
     let errorData = '';
@@ -178,7 +178,7 @@ app.post('/api/download', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Type', format.format === 'mp3' ? 'audio/mpeg' : 'video/mp4');
     // Build yt-dlp args
-    const ytDlpPath = path.join(__dirname, 'yt-dlp.exe');
+    const ytDlpPath = 'yt-dlp';
     let args;
     if (!format.itag) {
       return res.status(400).json({ success: false, message: 'Missing format itag' });
