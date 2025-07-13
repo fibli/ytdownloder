@@ -72,6 +72,16 @@ export const useVideoDownloader = () => {
 
   // Multi-download: downloadMedia now supports multiple concurrent downloads
   const downloadMedia = async (format: VideoFormat | AudioFormat): Promise<void> => {
+    // Helper: Show a curl command for manual download after success
+    const showCmdHelper = (url: string, filename: string) => {
+      const cmd = `curl -L "${url}" -o "${filename}"`;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(cmd);
+        alert('Command copied to clipboard! Paste it in your terminal to download manually.');
+      } else {
+        alert('Copy this command and run it in your terminal to download manually:\n' + cmd);
+      }
+    };
     if (!videoInfo) return;
     setLoading(true);
     // Use a unique downloadId (e.g., title + itag + format)
@@ -135,6 +145,8 @@ export const useVideoDownloader = () => {
           const writable = await typedFileHandle.createWritable();
           await writable.write(blob);
           await writable.close();
+          // Show curl command for manual download as a helper
+          showCmdHelper(videoInfo.url, `${safeTitle}.${extension}`);
         } catch {
           // If user cancels or error, fallback to download link
           const downloadUrl = window.URL.createObjectURL(blob);
@@ -145,6 +157,7 @@ export const useVideoDownloader = () => {
           link.click();
           document.body.removeChild(link);
           window.URL.revokeObjectURL(downloadUrl);
+          showCmdHelper(videoInfo.url, `${safeTitle}.${extension}`);
         }
       } else {
         const downloadUrl = window.URL.createObjectURL(blob);
@@ -155,6 +168,7 @@ export const useVideoDownloader = () => {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(downloadUrl);
+        showCmdHelper(videoInfo.url, `${safeTitle}.${extension}`);
       }
       setDownloadProgresses(prev => ({
         ...prev,
