@@ -7,7 +7,13 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://ytdownloder-p6gyqjqan-bimks-orgs-projects.vercel.app',
+    'http://localhost:5173', // for local dev
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Helper function to format file size
