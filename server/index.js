@@ -9,18 +9,20 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow localhost, all Vercel preview/production URLs, and Render frontend
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'https://ytdownloder-b4wg.onrender.com',
-    ];
-    // Allow any Vercel deployment (preview/production)
-    const vercelRegex = /^https:\/\/ytdownloder-[a-z0-9-]+-bimks-orgs-projects\.vercel\.app$/;
-    if (!origin || allowedOrigins.includes(origin) || vercelRegex.test(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Allow localhost for dev
+    if (!origin || origin.startsWith('http://localhost:')) {
+      return callback(null, true);
     }
+    // Allow any Vercel deployment for this project
+    if (/^https:\/\/ytdownloder(-[a-z0-9]+)?\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+    // Allow your Render frontend (if needed)
+    if (origin === 'https://ytdownloder-b4wg.onrender.com') {
+      return callback(null, true);
+    }
+    // Otherwise, block
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
 }));
