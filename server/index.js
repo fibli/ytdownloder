@@ -14,8 +14,8 @@ app.use(cors({
     if (!origin) return callback(null, true);
     // Allow localhost for dev
     if (origin.startsWith('http://localhost:')) return callback(null, true);
-    // Allow any Vercel deployment for this project (preview or production)
-    if (/^https:\/\/ytdownloder(-[a-z0-9]+)?\.vercel\.app$/.test(origin)) return callback(null, true);
+    // Allow any Vercel deployment for this project (preview or production, including orgs/projects)
+    if (/^https:\/\/ytdownloder(-[a-z0-9]+)?(-bimks-orgs-projects)?\.vercel\.app$/.test(origin)) return callback(null, true);
     // Allow your Render frontend (if needed)
     if (origin === 'https://ytdownloder-b4wg.onrender.com') return callback(null, true);
     // Otherwise, block
