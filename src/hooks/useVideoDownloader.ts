@@ -4,7 +4,7 @@ import axios, { AxiosError } from 'axios';
 
 // Configure axios base URL for backend API
 const api = axios.create({
-  baseURL: 'http://localhost:3001',
+  baseURL: 'https://ytdownloder-b4wg.onrender.com',
   timeout: 30000,
 });
 
