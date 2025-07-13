@@ -10,22 +10,20 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({
   origin: function (origin, callback) {
     console.log('CORS request from:', origin);
+    // Allow requests with no origin (like curl, server-to-server, or preflight)
+    if (!origin) return callback(null, true);
     // Allow localhost for dev
-    if (!origin || origin.startsWith('http://localhost:')) {
-      return callback(null, true);
-    }
+    if (origin.startsWith('http://localhost:')) return callback(null, true);
     // Allow any Vercel deployment for this project (preview or production)
-    if (/^https:\/\/ytdownloder(-[a-z0-9]+)?\.vercel\.app$/.test(origin)) {
-      return callback(null, true);
-    }
+    if (/^https:\/\/ytdownloder(-[a-z0-9]+)?\.vercel\.app$/.test(origin)) return callback(null, true);
     // Allow your Render frontend (if needed)
-    if (origin === 'https://ytdownloder-b4wg.onrender.com') {
-      return callback(null, true);
-    }
+    if (origin === 'https://ytdownloder-b4wg.onrender.com') return callback(null, true);
     // Otherwise, block
     callback(new Error('Not allowed by CORS: ' + origin));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 
