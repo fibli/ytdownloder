@@ -43,6 +43,8 @@ export const useVideoDownloader = () => {
     format: 'mp4',
     audioQuality: 'highest'
   });
+  // Store the last curl command for UI display
+  const [lastCurlCommand, setLastCurlCommand] = useState<string | null>(null);
 
   const extractVideoInfo = async (url: string): Promise<void> => {
     setAnalyzing(true);
@@ -72,15 +74,14 @@ export const useVideoDownloader = () => {
 
   // Multi-download: downloadMedia now supports multiple concurrent downloads
   const downloadMedia = async (format: VideoFormat | AudioFormat): Promise<void> => {
-    // Helper: Show a curl command for manual download after success
+    // Helper: Set and optionally copy a curl command for manual download after success
     const showCmdHelper = (url: string, filename: string) => {
       const cmd = `curl -L "${url}" -o "${filename}"`;
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(cmd);
-        alert('Command copied to clipboard! Paste it in your terminal to download manually.');
-      } else {
-        alert('Copy this command and run it in your terminal to download manually:\n' + cmd);
-      }
+      setLastCurlCommand(cmd);
+      // Optionally auto-copy to clipboard (uncomment if you want this always)
+      // if (navigator.clipboard) {
+      //   navigator.clipboard.writeText(cmd);
+      // }
     };
     if (!videoInfo) return;
     setLoading(true);
@@ -220,6 +221,13 @@ export const useVideoDownloader = () => {
     localStorage.setItem('downloadSettings', JSON.stringify(newSettings));
   };
 
+  // Helper to copy the last curl command to clipboard
+  const copyCurlCommand = () => {
+    if (lastCurlCommand && navigator.clipboard) {
+      navigator.clipboard.writeText(lastCurlCommand);
+    }
+  };
+
   return {
     loading,
     analyzing,
@@ -233,6 +241,8 @@ export const useVideoDownloader = () => {
     downloadMedia,
     cancelDownload,
     reset,
-    updateSettings
+    updateSettings,
+    lastCurlCommand,
+    copyCurlCommand
   };
 };
